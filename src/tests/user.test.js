@@ -2,12 +2,11 @@ const app = require('../app');
 const request = require('supertest');
 
 let id;
+let token;
 
-test('GET /users debe traer todos los usuarios', async () => {
-    const res = await request(app).get('/users');
-    expect(res.status).toBe(200);
-    expect(res.body).toBeInstanceOf(Array);
-});
+// 1. POST /users
+// 2. POST /users/login
+// 3. Resto de los tests
 
 test('POST /users debe crear un usuario', async () => {
     const newUser = {
@@ -30,9 +29,16 @@ test('POST /users/login debe loggear al usuario', async () => {
         password: 'test1234',
     }
     const res = await request(app).post('/users/login').send(credentials);
+    token = res.body.token;
     expect(res.status).toBe(200);
     expect(res.body.token).toBeDefined();
     expect(res.body.user.email).toBe(credentials.email);
+});
+
+test('GET /users debe traer todos los usuarios', async () => {
+    const res = await request(app).get('/users').set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toBeInstanceOf(Array);
 });
 
 test('POST /users/login con credenciales incorrectas debe dar error', async () => {
@@ -45,6 +51,8 @@ test('POST /users/login con credenciales incorrectas debe dar error', async () =
 });
 
 test('DELETE /users/:id debe eliminar un usuario', async () => {
-    const res = await request(app).delete(`/users/${id}`);
+    const res = await request(app)
+        .delete(`/users/${id}`)
+        .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(204);
 });
